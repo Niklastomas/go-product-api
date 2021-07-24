@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 )
@@ -17,6 +18,10 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
+func (p *Product) FromJSON(r io.Reader) error {
+	return json.NewDecoder(r).Decode(p)
+}
+
 type Products []*Product
 
 func (p *Products) ToJSON(w io.Writer) error {
@@ -25,6 +30,29 @@ func (p *Products) ToJSON(w io.Writer) error {
 
 func GetProducts() Products {
 	return productList
+}
+
+func (p *Product) Add() {
+	productList = append(productList, p)
+}
+
+func findProduct(id int) (*Product, int, error) {
+	for i, p := range productList {
+		if id == p.ID {
+			return p, i, nil
+		}
+	}
+	return nil, 0, fmt.Errorf("no product with id %d was found", id)
+}
+
+func (p *Product) Update(id int) error {
+	product, index, err := findProduct(id)
+	if err != nil {
+		return err
+	}
+	p.ID = product.ID
+	productList[index] = p
+	return nil
 }
 
 var productList = []*Product{
